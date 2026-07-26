@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template, request 
 from config import Config
 from models.user import db
 
@@ -14,7 +14,11 @@ with app.app_context():
 @app.route("/")
 def home():
     return "Secure Login System is Running!"
-
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        return "submitted!"
+    return render_template("register.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
