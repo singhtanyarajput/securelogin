@@ -1,18 +1,22 @@
-from flask import Flask, render_template, request 
+from flask import Flask, render_template, request, redirect, url_for
 from flask_bcrypt import Bcrypt
 from config import Config
 from models.user import db, User
-
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 app = Flask(__name__)
 app.config.from_object(Config)
 bcrypt = Bcrypt(app)
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
 
 db.init_app(app)
 
 with app.app_context():
     db.create_all()
 
-
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 @app.route("/")
 def home():
     return "Secure Login System is Running!"
@@ -46,11 +50,19 @@ def login():
         if not user:
             return "Invalid Username"
         if user and bcrypt.check_password_hash(user.password, password):
-            return "Login successful!"
+            login_user(user)
+            return redirect(url_for("dashboard"))
         else:
             return "Invalid username or password."
     return render_template("login.html")
-
-
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return f"Welcome {current_user.username} to your dashboard!"
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return "You have been logged out."
 if __name__ == "__main__":
     app.run(debug=True)
